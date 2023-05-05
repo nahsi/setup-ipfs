@@ -53,13 +53,14 @@ async function run() {
     if (!cachedPath) {
       const downloadPath = await tc.downloadTool(downloadUrl);
       const extractedPath = await tc.extractTar(downloadPath);
-      ipfsPath = await tc.cacheDir(extractedPath, "ipfs", version);
+      const binaryPath = `${extractedPath}/kubo`;
+      ipfsPath = await tc.cacheDir(binaryPath, "ipfs", version);
     } else {
       ipfsPath = cachedPath;
     }
 
-    core.addPath(ipfsPath);
-    await promisify(chmod)(`${ipfsPath}/ipfs`, 0o755);
+    core.addPath(ipfsPath + '/kubo');
+    await promisify(chmod)(`${ipfsPath}/kubo/ipfs`, 0o755);
 
     await promisify(exec)("ipfs --version");
     core.info(
