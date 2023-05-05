@@ -16,7 +16,7 @@ function guessPlatform() {
     "linux-x64": "linux-amd64",
     "darwin-x64": "darwin-amd64",
   };
-  console(platform);
+  console.log(platform);
   return platformMappings[platform] || platform;
 }
 
