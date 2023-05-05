@@ -45,19 +45,15 @@ async function run() {
       version = version.replace(/^v/, "");
     }
 
-    const filename = `ipfs`;
-    const downloadUrl = `${DOWNLOAD_URL}v${version}/${filename}-${platform}`;
+    const downloadUrl =
+      `${DOWNLOAD_URL}v${version}/kubo_v${version}_-${platform}.tar.gz`;
     const cachedPath = tc.find("ipfs", version, platform);
 
     let ipfsPath;
     if (!cachedPath) {
       const downloadPath = await tc.downloadTool(downloadUrl);
-      ipfsPath = await tc.cacheFile(
-        downloadPath,
-        filename,
-        "ipfs",
-        version,
-      );
+      const extractedPath = await tc.extractTar(downloadPath);
+      ipfsPath = await tc.cacheDir(extractedPath, "ipfs", version);
     } else {
       ipfsPath = cachedPath;
     }
