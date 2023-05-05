@@ -46,7 +46,7 @@ async function run() {
     }
 
     const downloadUrl =
-      `${DOWNLOAD_URL}v${version}/kubo_v${version}_-${platform}.tar.gz`;
+      `${DOWNLOAD_URL}v${version}/kubo_v${version}_${platform}.tar.gz`;
     const cachedPath = tc.find("ipfs", version, platform);
 
     let ipfsPath;
