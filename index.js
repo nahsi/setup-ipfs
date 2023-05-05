@@ -13,10 +13,9 @@ function guessPlatform() {
   const arch = process.arch;
   const platform = `${os}-${arch}`;
   const platformMappings = {
-    "linux-x64": "linux-amd64",
-    "darwin-x64": "darwin-amd64",
+    "linux-amd64": "linux-x86_64",
+    "darwin-amd64": "darwin-x86_64",
   };
-  console.log(platform);
   return platformMappings[platform] || platform;
 }
 
@@ -47,8 +46,7 @@ async function run() {
     }
 
     const filename = `ipfs`;
-    const downloadUrl =
-      `${DOWNLOAD_URL}v${version}/${filename}-${platform}`;
+    const downloadUrl = `${DOWNLOAD_URL}v${version}/${filename}-${platform}`;
     const cachedPath = tc.find("ipfs", version, platform);
 
     let ipfsPath;
