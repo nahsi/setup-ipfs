@@ -6,7 +6,7 @@ const { chmod } = require("fs");
 const { Octokit } = require("@octokit/rest");
 
 const DOWNLOAD_URL = "https://github.com/ipfs/kubo/releases/download/";
-const SUPPORTED_PLATFORMS = ["linux-x86_64", "darwin-x86_64"];
+const SUPPORTED_PLATFORMS = ["linux-amd64", "darwin-amd64"];
 
 function guessPlatform() {
   const os = process.platform;
