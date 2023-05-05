@@ -13,8 +13,8 @@ function guessPlatform() {
   const arch = process.arch;
   const platform = `${os}-${arch}`;
   const platformMappings = {
-    "linux-amd64": "linux-x86_64",
-    "darwin-amd64": "darwin-x86_64",
+    "linux-x64": "linux-amd64",
+    "darwin-x64": "darwin-amd64",
   };
   return platformMappings[platform] || platform;
 }
