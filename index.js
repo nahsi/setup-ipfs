@@ -1,13 +1,16 @@
 const core = require("@actions/core");
 const tc = require("@actions/tool-cache");
-const { promisify } = require("util");
 const { exec } = require("child_process");
-const { chmod } = require("fs");
+const fs = require("fs").promises;
 const { Octokit } = require("@octokit/rest");
 
 const DOWNLOAD_URL = "https://github.com/ipfs/kubo/releases/download/";
 const SUPPORTED_PLATFORMS = ["linux-amd64", "darwin-amd64"];
 
+/**
+ * Guess the platform based on the current OS and architecture.
+ * @returns {string} platform string
+ */
 function guessPlatform() {
   const os = process.platform;
   const arch = process.arch;
@@ -19,6 +22,39 @@ function guessPlatform() {
   return platformMappings[platform] || platform;
 }
 
+/**
+ * Get the latest IPFS release version.
+ * @returns {Promise<string>} latest IPFS version
+ */
+async function getLatestIPFSVersion() {
+  const octokit = new Octokit();
+  const releases = await octokit.repos.listReleases({
+    owner: "ipfs",
+    repo: "kubo",
+  });
+  const latestRelease = releases.data.find((release) =>
+    release.tag_name.startsWith("v")
+  );
+  if (!latestRelease) {
+    throw new Error("No IPFS release found");
+  }
+  return latestRelease.tag_name.replace(/^v/, "");
+}
+
+/**
+ * Download and extract IPFS binary.
+ * @param {string} version - IPFS version
+ * @param {string} platform - Target platform
+ * @returns {Promise<string>} path to the extracted IPFS binary
+ */
+async function downloadAndExtractIPFS(version, platform) {
+  const downloadUrl =
+    `${DOWNLOAD_URL}v${version}/kubo_v${version}_${platform}.tar.gz`;
+  const downloadPath = await tc.downloadTool(downloadUrl);
+  const extractedPath = await tc.extractTar(downloadPath);
+  return `${extractedPath}/kubo`;
+}
+
 async function run() {
   try {
     const platform = guessPlatform();
@@ -28,44 +64,24 @@ async function run() {
 
     let version = core.getInput("version");
     if (version === "latest") {
-      const octokit = new Octokit();
-      const releases = await octokit.repos.listReleases({
-        owner: "ipfs",
-        repo: "kubo",
-      });
-      const latestRelease = releases.data.find((release) =>
-        release.tag_name.startsWith("v")
-      );
-      if (!latestRelease) {
-        throw new Error("No IPFS release found");
-      }
-      version = latestRelease.tag_name.replace(/^v/, "");
+      version = await getLatestIPFSVersion();
       core.info(`Latest IPFS release is v${version}`);
     } else {
       version = version.replace(/^v/, "");
     }
 
-    const downloadUrl =
-      `${DOWNLOAD_URL}v${version}/kubo_v${version}_${platform}.tar.gz`;
     const cachedPath = tc.find("ipfs", version, platform);
-
-    let ipfsPath;
+    const ipfsPath = cachedPath ||
+      (await downloadAndExtractIPFS(version, platform));
     if (!cachedPath) {
-      const downloadPath = await tc.downloadTool(downloadUrl);
-      const extractedPath = await tc.extractTar(downloadPath);
-      const binaryPath = `${extractedPath}/kubo`;
-      ipfsPath = await tc.cacheDir(binaryPath, "ipfs", version);
-    } else {
-      ipfsPath = cachedPath;
+      await tc.cacheDir(ipfsPath, "ipfs", version);
     }
 
-    core.addPath(ipfsPath + '/kubo');
-    await promisify(chmod)(`${ipfsPath}/kubo/ipfs`, 0o755);
+    core.addPath(ipfsPath + "/kubo");
+    await fs.chmod(`${ipfsPath}/kubo/ipfs`, 0o755);
 
-    await promisify(exec)("ipfs --version");
-    core.info(
-      `ipfs v${version} for ${platform} has been set up successfully`,
-    );
+    await exec("ipfs --version");
+    core.info(`ipfs v${version} for ${platform} has been set up successfully`);
   } catch (error) {
     core.setFailed(error.message);
   }
