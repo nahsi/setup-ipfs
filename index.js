@@ -8,6 +8,24 @@ const DOWNLOAD_URL = "https://github.com/ipfs/kubo/releases/download/";
 const SUPPORTED_PLATFORMS = ["linux-amd64", "darwin-amd64"];
 
 /**
+ * Find the path of the IPFS binary in the extracted folder.
+ * @param {string} folderPath - Path to the extracted folder
+ * @returns {Promise<string>} path to the IPFS binary
+ */
+async function findBinaryPath(folderPath) {
+  const files = await fs.readdir(folderPath, { withFileTypes: true });
+  for (const file of files) {
+    if (file.isDirectory()) {
+      const binaryPath = await findBinaryPath(path.join(folderPath, file.name));
+      if (binaryPath) return binaryPath;
+    } else if (file.name === "ipfs") {
+      return folderPath;
+    }
+  }
+  return null;
+}
+
+/**
  * Guess the platform based on the current OS and architecture.
  * @returns {string} platform string
  */
@@ -74,11 +92,16 @@ async function run() {
     const ipfsPath = cachedPath ||
       (await downloadAndExtractIPFS(version, platform));
     if (!cachedPath) {
-      await tc.cacheDir(ipfsPath, "ipfs", version);
+      const binaryPath = await findBinaryPath(ipfsPath);
+      if (!binaryPath) {
+        throw new Error("IPFS binary not found in the extracted folder");
+      }
+      await tc.cacheDir(binaryPath, "ipfs", version);
     }
 
-    core.addPath(ipfsPath + "/kubo");
-    await fs.chmod(`${ipfsPath}/kubo/ipfs`, 0o755);
+    const binaryPath = await findBinaryPath(ipfsPath);
+    core.addPath(binaryPath);
+    await fs.chmod(`${binaryPath}/ipfs`, 0o755);
 
     await exec("ipfs --version");
     core.info(`ipfs v${version} for ${platform} has been set up successfully`);
