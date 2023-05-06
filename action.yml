@@ -1,0 +1,17 @@
+name: "Setup IPFS"
+description: "Download IPFS CLI and add it to $PATH"
+author: "nahsi"
+
+branding:
+  icon: "tool"
+  color: "gray-dark"
+
+inputs:
+  version:
+    description: "IPFS CLI version"
+    type: string
+    default: "latest"
+
+runs:
+  using: "node16"
+  main: "dist/index.js"

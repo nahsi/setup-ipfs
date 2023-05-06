@@ -1,0 +1,39 @@
+name: ci
+
+on:
+  pull_request:
+
+concurrency:
+  group: "${{ github.workflow }}-${{ github.ref }}"
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+        version:
+          - latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          cache: "npm"
+
+      - run: npm i
+      - run: npm run build
+
+      - name: Setup
+        uses: ./
+        with:
+          version: ${{ matrix.version }}
+
+      - name: Test
+        run: ipfs --version
