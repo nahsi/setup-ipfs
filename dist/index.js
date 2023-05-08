@@ -13387,6 +13387,7 @@ async function run() {
 
     await exec("ipfs --version");
     core.info(`ipfs v${version} for ${platform} has been set up successfully`);
+    await exec("ipfs --init");
   } catch (error) {
     core.setFailed(error.message);
   }

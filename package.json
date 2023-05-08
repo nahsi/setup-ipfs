@@ -1,6 +1,6 @@
 {
   "name": "setup-ipfs",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Download IPFS CLI",
   "main": "index.js",
   "scripts": {
