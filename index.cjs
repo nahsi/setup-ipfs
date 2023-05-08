@@ -114,17 +114,10 @@ async function run() {
 
     exec("ipfs init", (error, stdout, stderr) => {
       if (error) {
-        core.setFailed(`ipfs init failed: ${error.message}`);
+        core.setFailed(`ipfs init failed: ${stderr}`);
         return;
       }
       console.log(`IPFS init output: ${stdout}`);
-      exec("ipfs config show", (error, stdout, stderr) => {
-        if (error) {
-          core.setFailed(`ipfs config show failed: ${error.message}`);
-          return;
-        }
-        console.log(`IPFS config: ${stdout}`);
-      });
     });
   } catch (error) {
     core.setFailed(error.message);
