@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.2](https://github.com/nahsi/setup-ipfs/compare/v1.0.1...v1.0.2) (2023-05-08)
+
+
+### Bug Fixes
+
+* Fix IPFS init and cleanup archive directories ([#5](https://github.com/nahsi/setup-ipfs/issues/5)) ([4e3cede](https://github.com/nahsi/setup-ipfs/commit/4e3cede5be79efd84d63715afc6f6b67b0d1d19e))
+
 ## [1.0.1](https://github.com/nahsi/setup-ipfs/compare/v1.0.0...v1.0.1) (2023-05-08)
 
 
