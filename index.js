@@ -72,10 +72,11 @@ async function run() {
     }
 
     const cachedPath = tc.find("ipfs", version, platform);
-    const ipfsPath = cachedPath ||
-      (await downloadAndExtractIPFS(version, platform));
+    let ipfsPath;
 
-    if (!cachedPath) {
+    if (cachedPath) {
+      ipfsPath = cachedPath;
+    } else {
       const { extractedPath, downloadPath } = await downloadAndExtractIPFS(
         version,
         platform,
@@ -84,7 +85,7 @@ async function run() {
       if (!binaryPath) {
         throw new Error("IPFS binary not found in the extracted folder");
       }
-      await tc.cacheDir(binaryPath, "ipfs", version);
+      ipfsPath = await tc.cacheDir(binaryPath, "ipfs", version);
 
       // Clean up downloaded archive
       await fs.unlink(downloadPath);
@@ -98,7 +99,7 @@ async function run() {
     await fs.chmod(`${binaryPath}/ipfs`, 0o755);
 
     await exec("ipfs --version");
-    core.info(`ipfs v${version}for ${platform} has been set up successfully`);
+    core.info(`ipfs v${version} for ${platform} has been set up successfully`);
 
     const tmpDir = await fs.mkdtemp(`${os.tmpdir()}${path.sep}`);
     core.exportVariable("IPFS_PATH", tmpDir);
@@ -110,6 +111,13 @@ async function run() {
         return;
       }
       console.log(`IPFS init output: ${stdout}`);
+      exec("ipfs config show", (error, stdout, stderr) => {
+        if (error) {
+          core.setFailed(`ipfs config show failed: ${error.message}`);
+          return;
+        }
+        console.log(`IPFS config: ${stdout}`);
+      });
     });
   } catch (error) {
     core.setFailed(error.message);
