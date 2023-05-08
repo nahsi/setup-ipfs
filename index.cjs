@@ -101,9 +101,16 @@ async function run() {
     await exec("ipfs --version");
     core.info(`ipfs v${version} for ${platform} has been set up successfully`);
 
-    const tmpDir = await fs.mkdtemp(`${os.tmpdir()}${path.sep}`);
-    core.exportVariable("IPFS_PATH", tmpDir);
-    core.saveState("tmpDir", tmpDir);
+    try {
+      const tmpDir = await fs.mkdtemp(`${os.tmpdir()}${path.sep}`);
+      core.exportVariable("IPFS_PATH", tmpDir);
+      core.saveState("tmpDir", tmpDir);
+    } catch (error) {
+      core.setFailed(
+        `Failed to create temporary IPFS directory: ${error.message}`,
+      );
+      return;
+    }
 
     exec("ipfs --init", (error, stdout, stderr) => {
       if (error) {
