@@ -2,16 +2,13 @@ const core = require("@actions/core");
 const tc = require("@actions/tool-cache");
 const { exec } = require("child_process");
 const fs = require("fs").promises;
+const os = require("os");
+const path = require("path");
 const { Octokit } = require("@octokit/rest");
 
 const DOWNLOAD_URL = "https://github.com/ipfs/kubo/releases/download/";
 const SUPPORTED_PLATFORMS = ["linux-amd64", "darwin-amd64"];
 
-/**
- * Find the path of the IPFS binary in the extracted folder.
- * @param {string} folderPath - Path to the extracted folder
- * @returns {Promise<string>} path to the IPFS binary
- */
 async function findBinaryPath(folderPath) {
   const files = await fs.readdir(folderPath, { withFileTypes: true });
   for (const file of files) {
@@ -25,10 +22,6 @@ async function findBinaryPath(folderPath) {
   return null;
 }
 
-/**
- * Guess the platform based on the current OS and architecture.
- * @returns {string} platform string
- */
 function guessPlatform() {
   const os = process.platform;
   const arch = process.arch;
@@ -40,10 +33,6 @@ function guessPlatform() {
   return platformMappings[platform] || platform;
 }
 
-/**
- * Get the latest IPFS release version.
- * @returns {Promise<string>} latest IPFS version
- */
 async function getLatestIPFSVersion() {
   const octokit = new Octokit();
   const releases = await octokit.repos.listReleases({
@@ -59,18 +48,12 @@ async function getLatestIPFSVersion() {
   return latestRelease.tag_name.replace(/^v/, "");
 }
 
-/**
- * Download and extract IPFS binary.
- * @param {string} version - IPFS version
- * @param {string} platform - Target platform
- * @returns {Promise<string>} path to the extracted IPFS binary
- */
 async function downloadAndExtractIPFS(version, platform) {
   const downloadUrl =
     `${DOWNLOAD_URL}v${version}/kubo_v${version}_${platform}.tar.gz`;
   const downloadPath = await tc.downloadTool(downloadUrl);
   const extractedPath = await tc.extractTar(downloadPath);
-  return `${extractedPath}/kubo`;
+  return { extractedPath, downloadPath };
 }
 
 async function run() {
@@ -89,14 +72,26 @@ async function run() {
     }
 
     const cachedPath = tc.find("ipfs", version, platform);
-    const ipfsPath = cachedPath ||
-      (await downloadAndExtractIPFS(version, platform));
-    if (!cachedPath) {
-      const binaryPath = await findBinaryPath(ipfsPath);
+    let ipfsPath;
+
+    if (cachedPath) {
+      ipfsPath = cachedPath;
+    } else {
+      const { extractedPath, downloadPath } = await downloadAndExtractIPFS(
+        version,
+        platform,
+      );
+      const binaryPath = await findBinaryPath(extractedPath);
       if (!binaryPath) {
         throw new Error("IPFS binary not found in the extracted folder");
       }
-      await tc.cacheDir(binaryPath, "ipfs", version);
+      ipfsPath = await tc.cacheDir(binaryPath, "ipfs", version);
+
+      // Clean up downloaded archive
+      await fs.unlink(downloadPath);
+
+      // Clean up extracted folder
+      await fs.rmdir(extractedPath, { recursive: true });
     }
 
     const binaryPath = await findBinaryPath(ipfsPath);
@@ -105,7 +100,25 @@ async function run() {
 
     await exec("ipfs --version");
     core.info(`ipfs v${version} for ${platform} has been set up successfully`);
-    await exec("ipfs --init");
+
+    try {
+      const tmpDir = await fs.mkdtemp(`${os.tmpdir()}${path.sep}`);
+      core.exportVariable("IPFS_PATH", tmpDir);
+      core.saveState("tmpDir", tmpDir);
+    } catch (error) {
+      core.setFailed(
+        `Failed to create temporary IPFS directory: ${error.message}`,
+      );
+      return;
+    }
+
+    exec("ipfs init", (error, stdout, stderr) => {
+      if (error) {
+        core.setFailed(`ipfs init failed: ${stderr}`);
+        return;
+      }
+      console.log(`IPFS init output: ${stdout}`);
+    });
   } catch (error) {
     core.setFailed(error.message);
   }

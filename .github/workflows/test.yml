@@ -36,4 +36,4 @@ jobs:
           version: ${{ matrix.version }}
 
       - name: Test
-        run: ipfs --version
+        run: ipfs config show

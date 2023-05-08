@@ -4,7 +4,7 @@
   "description": "Download IPFS CLI",
   "main": "index.js",
   "scripts": {
-    "build": "ncc build index.js"
+    "build": "ncc build index.cjs -o dist; ncc build cleanup.js -o dist"
   },
   "repository": {
     "type": "git",
