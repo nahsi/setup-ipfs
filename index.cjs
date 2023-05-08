@@ -112,7 +112,7 @@ async function run() {
       return;
     }
 
-    exec("ipfs --init", (error, stdout, stderr) => {
+    exec("ipfs init", (error, stdout, stderr) => {
       if (error) {
         core.setFailed(`ipfs init failed: ${error.message}`);
         return;

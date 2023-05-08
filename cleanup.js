@@ -7,7 +7,7 @@ async function cleanup() {
 
     if (tmpDir) {
       core.info(`Cleaning up temporary IPFS directory: ${tmpDir}`);
-      await fs.rmdir(tmpDir, { recursive: true });
+      await fs.rm(tmpDir, { recursive: true });
     } else {
       core.warning("Temporary IPFS directory not found");
     }
