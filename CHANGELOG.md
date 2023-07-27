@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.3](https://github.com/nahsi/setup-ipfs/compare/v1.0.2...v1.0.3) (2023-07-27)
+
+
+### Bug Fixes
+
+* Filter out draft and pre-releases ([#7](https://github.com/nahsi/setup-ipfs/issues/7)) ([f7817ca](https://github.com/nahsi/setup-ipfs/commit/f7817ca309bdd704ca11da2fd983a85701310749))
+
 ## [1.0.2](https://github.com/nahsi/setup-ipfs/compare/v1.0.1...v1.0.2) (2023-05-08)
 
 
