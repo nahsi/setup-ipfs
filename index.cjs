@@ -39,9 +39,9 @@ async function getLatestIPFSVersion() {
     owner: "ipfs",
     repo: "kubo",
   });
-  const latestRelease = releases.data.find((release) =>
-    release.tag_name.startsWith("v")
-  );
+  const latestRelease = releases.data
+    .filter((release) => !release.draft && !release.prerelease)
+    .find((release) => release.tag_name.startsWith("v"));
   if (!latestRelease) {
     throw new Error("No IPFS release found");
   }
